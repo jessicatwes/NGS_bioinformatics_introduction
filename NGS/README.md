@@ -1,6 +1,8 @@
 # Next-generation sequence (NGS)
 NGS enable scientists to use high-throughput sequencing of DNA and RNA. In this repository I go over some of the basic tools that I have used to analyze my sequencing data. 
 
+![Next-generation sequencing illustration](NGS.png)
+
 ## Pipelines
 To work with NGS data, the process involves extracting raw FASTQ data from a sequencer and passing it through a NGS pipeline. This pipeline includes quality control, pre-processing, and alignment to a reference genome. This systematic approach transforms the initial raw sequencing data into interpretable information, enabling the extraction of valuable biological insights.
 
