@@ -1,6 +1,6 @@
-#  NGS Resources
+# NGS Resources
 
-## Files for NGS  alignment  workflow
+## Details on resources and files needed for NGS  alignment  workflow
 * BBMap adapter: Adapter used with  BBMap. File 'adapters.fa' in directory is for BBMap. File was downloadad from [BBMap resource page](https://github.com/BioInfoTools/BBMap/blob/master/resources/adapters.fa).
 * HISAT2 index: Used with HISAT2 during alignment to map reads to reference genome. Resource to download [HISAT2 index genome/](https://daehwankimlab.github.io/hisat2/download/).
 * RefSeq reference genome: NCBI RefSeq h38 reference genome. File 'hg38_refseq.bed' is human GRCh38 reference genome. Additional reference can be found from [NCBI refseq](https://www.ncbi.nlm.nih.gov/refseq/).
