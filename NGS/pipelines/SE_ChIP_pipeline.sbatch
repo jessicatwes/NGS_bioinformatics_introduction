@@ -1,25 +1,26 @@
 #!/bin/bash
-#SBATCH --job-name=ChIP_map # Job name
-#SBATCH --mail-type=FAIL,END # Mail events (NONE, BEGIN, END, FAIL, ALL)
-#SBATCH --mail-user=margaret.gruca@colorado.edu # Where to send mail
+#SBATCH --job-name=ChIP_map 		# Job name
+#SBATCH --mail-type=FAIL,END 		# Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=youremail@host.com	# Where to send mail
 #SBATCH --nodes=1
-#SBATCH --ntasks=32 # Number of CPU (processer cores i.e. tasks)
-#SBATCH --time=08:00:00 # Time limit hrs:min:sec
+#SBATCH --ntasks=32 			# Number of CPU (processer cores i.e. tasks)
+#SBATCH --time=08:00:00 		# Time limit hrs:min:sec
 #SBATCH --partition short
-#SBATCH --mem=100gb # Memory limit
-#SBATCH --output=/scratch/Users/magr0763/e_and_o/%x_%j.out
-#SBATCH --error=/scratch/Users/magr0763/e_and_o/%x_%j.err
+#SBATCH --mem=100gb 			# Memory limit
+#SBATCH --output=/path/to/directory/%x_%j.out	# Standard output
+#SBATCH --error=/path/to/directory/%x_%j.err	# Standard error
 
-#This script will take you from a raw, unedited fastq file to tdf
+########################### SE ChIP-seq ########################### 
+### Single-end (SE) ChIP-sequencing pipeline. This script will take the SE raw, unedited fastq file to TDF file format to use in the IGV browser.
 
-rootname=
-project=
-ref=
+rootname=				#name of file root
+project=				#/path/to/project/directory/
 
 pwd; hostname; date
 date
 
-#Quality check of fastqc file before trimming
+########################### QC and Pre-processing ###########################
+### Pre-trim quality check of fastqc file before trimming
 
 module load fastqc/0.11.5
 fastqc ${project}/fastq/${rootname}.fastq -o ${project}/fastq/FastQC/
@@ -27,28 +28,29 @@ echo pre-trim qual
 date
 date
 
-###Trimming: there are a number of different tools available (Trimmomatic, cudadapt, TrimGalore). My favorite currently for most purposes in bbduk due to its rapid runtime and large number of trimming options. "literal" is commented out below. The current sequence I have there is for rrna contaminants, however you can specify any sequence (similar to -a flag in cutadapt). This is useful if you have to add an additional sequence/contaminant to trim rather than adding it to the fa file. Because of the large number of options, bbduk is particularly useful if you really know your data. For a first pass if you are not sure of the protocol, you will more than likely miss adapters as it has no autodetect feature.
-###Go here for full list of options : https://github.com/BioInfoTools/BBMap/blob/master/sh/bbduk2.sh
+### Trimming of additional sequences including adapters, rRNA contaminants, or any specified sequence. There are multiple trimming tools that can be used for this step (Trimmomatic, Cutadapt, TrimGalore, BBDuk). 
+## See https://github.com/BioInfoTools/BBMap/blob/master/sh/bbduk2.sh for parameters for bbduk.
 
 module load bbmap/38.05
 
 bbduk.sh -Xmx20g \
-t=16 \
-overwrite= t \
-in=${project}/fastq/${rootname}.fastq \
-out=${project}/trimmed/${rootname}.trim.fastq \
-ref=/scratch/Users/magr0763/bbmap/resources/adapters.fa \
-ktrim=r qtrim=10 k=23 mink=11 hdist=1 \
-maq=10 minlen=20 \
-stats=${project}/trimmed/${rootname}.trimstats.txt \
-refstats=${project}/trimmed/${rootname}.refstats.txt \
-ehist=${project}/trimmed/${rootname}.ehist.txt
+ t=16 \
+ overwrite= t \
+ in=${project}/fastq/${rootname}.fastq \
+ out=${project}/trimmed/${rootname}.trim.fastq \
+ ref=/scratch/Users/magr0763/bbmap/resources/adapters.fa \
+ ktrim=r qtrim=10 k=23 mink=11 hdist=1 \
+ maq=10 minlen=20 \
+ stats=${project}/trimmed/${rootname}.trimstats.txt \
+ refstats=${project}/trimmed/${rootname}.refstats.txt \
+ ehist=${project}/trimmed/${rootname}.ehist.txt
 
 echo bbduk trim
 date
 date
 
-#Quality check trimmed reads --> if first QC bad, check these before moving forward and adjust parameters if needed
+### Quality check of reads after trim. 
+# Run QC on reads to compare to pre-trim reads and adjust parameters as needed
 
 module load fastqc/0.11.5
 fastqc ${project}/trimmed/${rootname}.bbduk.trim.fastq -o ${project}/trimmed/FastQC/
@@ -56,11 +58,12 @@ echo post-trim qual
 date
 date
 
-#Map trimmed fastq files to reference genome --> sam files include all reads
+########################### Alignment to reference genome ###########################
 
 module load samtools/1.3.1
 module load hisat2/2.1.0
 
+### Map trimmed fastq files to reference genome
 hisat2 -p 16 \
  --very-sensitive \
  --no-spliced-alignment \
@@ -73,18 +76,22 @@ echo mapped, sam
 date
 date
 
-#Word count sam files, convert sam files to bam files (compressed, binary sam files)
+########################### File formatting ###########################
+
+### Word count SAM files, convert sam files to bam files (compressed, binary sam files)
 
 wc \
  -l ${project}/mapped/sams/${rootname}.trim.sam \
  > ${project}/mapped/sams/${rootname}.trim.sam.wc
 
+## samtools view converts file from SAM format into binary  BAM format. Can also conver to CRAM which is compressed, index version of BAM
 samtools view \
  -S -b -o \
  ${project}/mapped/bams/${rootname}.trim.bam \
  ${project}/mapped/sams/${rootname}.trim.sam \
  2> ${project}/mapped/bams/${rootname}.trim.bam.err
 
+## samtools flagstat calculate statistics based on the information in the FLAG field of each alignment. Useful for read count correction (rcc) and QC.
 samtools flagstat \
  ${project}/mapped/bams/${rootname}.trim.bam \
  > ${project}/mapped/bams/${rootname}.trim.bam.flagstat \
@@ -94,8 +101,7 @@ echo bam
 date
 date
 
-#Sort bam files, flagstat useful for rcc (read count correction) and QC
-
+## samtools sort sequence alignments in file based on leftmost coordinates
 samtools sort \
  -m 100G ${project}/mapped/bams/${rootname}.trim.bam \
  > ${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam
@@ -109,8 +115,7 @@ echo sorted.bam
 date
 date
 
-#Index sorted bam files for use in mutlicov OR if you decide to sort out a specific region (e.g. use samtools view to select only chromosome 1)
-
+## samtools index creates a file to enable rapid retrieval of alignment of genomic regions. Used in multicov or to select specific genomic regions
 samtools index \
  ${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam \
  ${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam.bai
@@ -119,9 +124,11 @@ echo indexed
 date
 date
 
+########################### QC for report summary ###########################
+### Preseq is tool designed to estimate and predict complexity  of sequencing libary.
 module load preseq/2.0.3
 
-#c_curve : can use inputs from file types [bed/bam] and will plot the estimated complexity of a sample. Specify -B for sorted bam files, -P for paired end read files
+## preseq c_curve takes bam file and plot the estimated complexity of a sample. Parameters -B for sorted bam files and -P for paired end read files. 
 
 preseq c_curve -B \
  -o ${project}/preseq/${rootname}.c_curve.txt \
@@ -131,7 +138,7 @@ echo c_curve
 echo complexity
 date
 
-#lc_extrap : can use inputs from from tyles [bed/bam] and will estimate future yields for complexity if the sample is sequenced at higher read depths. Specify -B for sorted bam files, -P for paired end reads
+## preseq lc_extrap takes bam file and estimate predicted yield for complexity if the sample were to be sequenced at higher read depths. Parameters -B for sorted bam files and -P for paired end reads
 
 preseq lc_extrap -B \
  -o ${project}/preseq/${rootname}.lc_extrap.txt \
@@ -141,7 +148,7 @@ echo lc_extrap
 echo future yield
 date
 
-#analyze read distributions using RSeQC -- will give you number of reads over different regions of genome dependent on the input annotation file (typically will be over genes, but you can imagine the applicability to eRNA calls eventually for quick comparison of relative eRNA coverage between samples)
+### RSeQC evaluates sequence quality including nucleotide composition bias, PCR and GC bias, mapped reads distribution, strand specificity, and other quality output. Read distributions gives the number of reads over different region of genome dependent on input annotation file per samples.
 
 module load python/2.7.14/rseqc
 
@@ -154,7 +161,7 @@ echo rseqc
 date
 date
 
-### Tool in the bbmap suite which will give you GC content info over the sample per chromosome (required bai file), and amount of coverage which is define as total number of bases covered by reads (NOT DEPTH)
+### Coverage stats. Use tool in the bbmap suite to get the GC content over sample per chromosome and the number of bases covered by reads (coverage, not depth)
 
 echo generating coverage stats
 date
@@ -171,9 +178,7 @@ echo coverage stats done
 date
 date
 
-#BedGraph generator -- generating positive and negative strand mapping; awk coverts values to negative values for negative strand mapping
-
-#NOTE: For the current input of FStitch, it is VERY important to include "pos" somewhere in your output BedGraph file name, otherwise you will run into problems with your training data
+### BedTools generates BedGraph; positive and negative strand mapping
 
 module load bedtools/2.25.0
 
@@ -190,7 +195,7 @@ echo BedGraph.pos.neg
 date
 date
 
-#Read count correcting (rcc) -- reducing sequencing bias based on depth for visualization in IGV
+### Read count correcting (rcc) reduces sequencing bias based on depth for visualization in IGV
 
 module load python/2.7.14
 
@@ -204,7 +209,7 @@ echo readcountcorrectedbedgraph
 date
 date
 
-#Generate tdfs (compressed bedgraphs) -- mapped reads easily viewable in IGV
+### Generate compressed bedgraphs, TDF files, for easier use in IGV
 
 /opt/igvtools/2.3.75/igvtools toTDF \
  ${project}/mapped/bedgraph/${rootname}.trim.rcc.BedGraph \
@@ -214,4 +219,3 @@ date
 echo tdf
 date
 date
-
