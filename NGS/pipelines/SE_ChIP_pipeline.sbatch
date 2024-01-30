@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=ChIP_map 		# Job name
+#SBATCH --job-name=ChIPseq 		# Job name
 #SBATCH --mail-type=FAIL,END 		# Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=youremail@host.com	# Where to send mail
 #SBATCH --nodes=1
@@ -13,8 +13,12 @@
 ########################### SE ChIP-seq ########################### 
 ### Single-end (SE) ChIP-sequencing pipeline. This script will take the SE raw, unedited fastq file to TDF file format to use in the IGV browser.
 
-rootname=				#name of file root
-project=				#/path/to/project/directory/
+ROOTNAME='rootname'			#name of file root
+PROJECT='/path/to//directory/'
+ADAPTER='resources/adapter.fa'		#adapter from bbmap	
+GENOMEINDEX='resources/HISAT2/genome'	#resource contains compressed file
+REFGENOME='resources/hg38_refseq.bed'	
+CHROMESIZE='resources/hg38.chrom.sizes'
 
 pwd; hostname; date
 date
@@ -23,7 +27,7 @@ date
 ### Pre-trim quality check of fastqc file before trimming
 
 module load fastqc/0.11.5
-fastqc ${project}/fastq/${rootname}.fastq -o ${project}/fastq/FastQC/
+fastqc ${tPROJECT}/fastq/${ROOTNAME}.fastq -o ${PROJECT}/fastq/FastQC/
 echo pre-trim qual
 date
 date
@@ -36,14 +40,14 @@ module load bbmap/38.05
 bbduk.sh -Xmx20g \
  t=16 \
  overwrite= t \
- in=${project}/fastq/${rootname}.fastq \
- out=${project}/trimmed/${rootname}.trim.fastq \
- ref=/scratch/Users/magr0763/bbmap/resources/adapters.fa \
+ in=${PROJECT}/fastq/${rootname}.fastq \
+ out=${PROJECT}/trimmed/${rootname}.trim.fastq \
+ ref=${ADAPTER}  \
  ktrim=r qtrim=10 k=23 mink=11 hdist=1 \
  maq=10 minlen=20 \
- stats=${project}/trimmed/${rootname}.trimstats.txt \
- refstats=${project}/trimmed/${rootname}.refstats.txt \
- ehist=${project}/trimmed/${rootname}.ehist.txt
+ stats=${PROJECT}/trimmed/${rootname}.trimstats.txt \
+ refstats=${PROJECT}/trimmed/${rootname}.refstats.txt \
+ ehist=${PROJECT}/trimmed/${rootname}.ehist.txt
 
 echo bbduk trim
 date
@@ -53,7 +57,7 @@ date
 # Run QC on reads to compare to pre-trim reads and adjust parameters as needed
 
 module load fastqc/0.11.5
-fastqc ${project}/trimmed/${rootname}.bbduk.trim.fastq -o ${project}/trimmed/FastQC/
+fastqc ${PROJECT}/trimmed/${ROOTNAME}.bbduk.trim.fastq -o ${PROJECT}/trimmed/FastQC/
 echo post-trim qual
 date
 date
@@ -67,10 +71,10 @@ module load hisat2/2.1.0
 hisat2 -p 16 \
  --very-sensitive \
  --no-spliced-alignment \
- -x ${ref}/HISAT2_indexes/genome \
- -U ${project}/trimmed/${rootname}.trim.fastq \
- > ${project}/mapped/sams/${rootname}.trim.sam \
- 2> ${project}/mapped/sams/${rootname}.trim.stderr
+ -x ${GENOMEINDEX} \
+ -U ${PROJECT}/trimmed/${ROOTNAME}.trim.fastq \
+ > ${PROJECT}/mapped/sams/${ROOTNAME}.trim.sam \
+ 2> ${PROJECT}/mapped/sams/${ROOTNAME}.trim.stderr
 
 echo mapped, sam
 date
@@ -81,21 +85,21 @@ date
 ### Word count SAM files, convert sam files to bam files (compressed, binary sam files)
 
 wc \
- -l ${project}/mapped/sams/${rootname}.trim.sam \
- > ${project}/mapped/sams/${rootname}.trim.sam.wc
+ -l ${PROJECT}/mapped/sams/${ROOTNAME}.trim.sam \
+ > ${PROJECT}/mapped/sams/${ROOTNAME}.trim.sam.wc
 
 ## samtools view converts file from SAM format into binary  BAM format. Can also conver to CRAM which is compressed, index version of BAM
 samtools view \
  -S -b -o \
- ${project}/mapped/bams/${rootname}.trim.bam \
- ${project}/mapped/sams/${rootname}.trim.sam \
- 2> ${project}/mapped/bams/${rootname}.trim.bam.err
+ ${PROJECT}/mapped/bams/${ROOTNAME}.trim.bam \
+ ${PROJECT}/mapped/sams/${ROOTNAME}.trim.sam \
+ 2> ${PROJECT}/mapped/bams/${ROOTNAME}.trim.bam.err
 
 ## samtools flagstat calculate statistics based on the information in the FLAG field of each alignment. Useful for read count correction (rcc) and QC.
 samtools flagstat \
- ${project}/mapped/bams/${rootname}.trim.bam \
- > ${project}/mapped/bams/${rootname}.trim.bam.flagstat \
- 2> ${project}/mapped/bams/${rootname}.trim.bam.flagstat.err
+ ${PROJECT}/mapped/bams/${ROOTNAME}.trim.bam \
+ > ${PROJECT}/mapped/bams/${ROOTNAME}.trim.bam.flagstat \
+ 2> ${PROJECT}/mapped/bams/${ROOTNAME}.trim.bam.flagstat.err
 
 echo bam
 date
@@ -103,13 +107,13 @@ date
 
 ## samtools sort sequence alignments in file based on leftmost coordinates
 samtools sort \
- -m 100G ${project}/mapped/bams/${rootname}.trim.bam \
- > ${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam
+ -m 100G ${PROJECT}/mapped/bams/${ROOTNAME}.trim.bam \
+ > ${PROJECT}/mapped/bams/sorted/${ROOTNAME}.trim.sorted.bam
 
 samtools flagstat \
- ${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam \
- > ${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam.flagstat \
- 2> ${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam.flagstat.err
+ ${PROJECT}/mapped/bams/sorted/${ROOTNAME}.trim.sorted.bam \
+ > ${PROJECT}/mapped/bams/sorted/${ROOTNAME}.trim.sorted.bam.flagstat \
+ 2> ${PROJECT}/mapped/bams/sorted/${ROOTNAME}.trim.sorted.bam.flagstat.err
 
 echo sorted.bam
 date
@@ -117,8 +121,8 @@ date
 
 ## samtools index creates a file to enable rapid retrieval of alignment of genomic regions. Used in multicov or to select specific genomic regions
 samtools index \
- ${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam \
- ${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam.bai
+ ${PROJECT}/mapped/bams/sorted/${ROOTNAME}.trim.sorted.bam \
+ ${PROJECT}/mapped/bams/sorted/${ROOTNAME}.trim.sorted.bam.bai
 
 echo indexed
 date
@@ -131,8 +135,8 @@ module load preseq/2.0.3
 ## preseq c_curve takes bam file and plot the estimated complexity of a sample. Parameters -B for sorted bam files and -P for paired end read files. 
 
 preseq c_curve -B \
- -o ${project}/preseq/${rootname}.c_curve.txt \
- ${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam
+ -o ${PROJECT}/preseq/${ROOTNAME}.c_curve.txt \
+ ${PROJECT}/mapped/bams/sorted/${ROOTNAME}.trim.sorted.bam
 
 echo c_curve
 echo complexity
@@ -141,8 +145,8 @@ date
 ## preseq lc_extrap takes bam file and estimate predicted yield for complexity if the sample were to be sequenced at higher read depths. Parameters -B for sorted bam files and -P for paired end reads
 
 preseq lc_extrap -B \
- -o ${project}/preseq/${rootname}.lc_extrap.txt \
- ${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam
+ -o ${PROJECT}/preseq/${ROOTNAME}.lc_extrap.txt \
+ ${PROJECT}/mapped/bams/sorted/${ROOTNAME}.trim.sorted.bam
 
 echo lc_extrap
 echo future yield
@@ -153,9 +157,9 @@ date
 module load python/2.7.14/rseqc
 
 read_distribution.py \
- -i ${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam \
- -r /scratch/Users/magr0763/genomes/GeneAnnotations/hg38_refseq.bed \
- > ${project}/rseqc/${rootname}.read_dist.txt
+ -i ${PROJECT}/mapped/bams/sorted/${ROOTNAME}.trim.sorted.bam \
+ -r ${REFGENOME} \
+ > ${PROJECT}/rseqc/${ROOTNAME}.read_dist.txt
 
 echo rseqc
 date
@@ -170,9 +174,9 @@ date
 module load java/1.8.0_101
 
 pileup.sh \
- in=${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam \
- out=${project}/qc/coverage/${rootname}.coverage.stats.txt \
- hist=${project}/qc/coverage/${rootname}.coverage.hist.txt
+ in=${PROJECT}/mapped/bams/sorted/${ROOTNAME}.trim.sorted.bam \
+ out=${PROJECT}/qc/coverage/${ROOTNAME}.coverage.stats.txt \
+ hist=${PROJECT}/qc/coverage/${ROOTNAME}.coverage.hist.txt
 
 echo coverage stats done
 date
@@ -184,37 +188,38 @@ module load bedtools/2.25.0
 
 genomeCoverageBed \
  -bg -strand + -g hg38 \
- -ibam ${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam \
- > ${project}/mapped/bedgraph/${rootname}.trim.unsorted.BedGraph 
+ -ibam ${PROJECT}/mapped/bams/sorted/${ROOTNAME}.trim.sorted.bam \
+ > ${PROJECT}/mapped/bedgraph/${ROOTNAME}.trim.unsorted.BedGraph 
 
 sortBed \
- -i ${project}/mapped/bedgraph/${rootname}.trim.unsorted.BedGraph \
- > ${project}/mapped/bedgraph/${rootname}.trim.BedGraph
+ -i ${PROJECT}/mapped/bedgraph/${ROOTNAME}.trim.unsorted.BedGraph \
+ > ${PROJECT}/mapped/bedgraph/${ROOTNAME}.trim.BedGraph
 
 echo BedGraph.pos.neg
 date
 date
 
-### Read count correcting (rcc) reduces sequencing bias based on depth for visualization in IGV
+### Read count correcting (rcc) reduces sequencing bias based on depth for visualization in IGV. To run you need to git clone https://github.com/maallen3/mapandvischainonfijii.
 
 module load python/2.7.14
 
 python \
- /Users/magr0763/mappingandvis/readcountcorrectBG.py \
- ${project}/mapped/bedgraph/${rootname}.trim.BedGraph \
- ${project}/mapped/bams/sorted/${rootname}.trim.sorted.bam.flagstat \
- ${project}/mapped/bedgraph/${rootname}.trim.rcc.BedGraph
+ /path/to/readcountcorrectBG.py \
+ ${PROJECT}/mapped/bedgraph/${ROOTNAME}.trim.BedGraph \
+ ${PROJECT}maapped/bams/sorted/${ROOTNAME}.trim.sorted.bam.flagstat \
+ ${PROJECT}/mapped/bedgraph/${ROOTNAME}.trim.rcc.BedGraph
 
-echo readcountcorrectedbedgraph
+echo read count corrected bedgraph
 date
 date
 
 ### Generate compressed bedgraphs, TDF files, for easier use in IGV
+## Need to install igvtools to use script below
 
-/opt/igvtools/2.3.75/igvtools toTDF \
- ${project}/mapped/bedgraph/${rootname}.trim.rcc.BedGraph \
- ${project}/mapped/tdfs/${rootname}.trim.tdf \
- /Users/magr0763/igv/genomes/sizes/hg38.chrom.sizes
+/path/to/opt/igvtools/2.3.75/igvtools toTDF \
+ ${PROJECT}/mapped/bedgraph/${ROOTNAME}.trim.rcc.BedGraph \
+ ${PROJECT}/mapped/tdfs/${ROOTNAME}.trim.tdf \
+ ${CHROMESIZE}
 
 echo tdf
 date
