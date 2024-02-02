@@ -7,4 +7,4 @@
 * Chromosome size: Human chrome size file, 'hg38.chrom.sizes' downloaded from IGV. Additional chrom.size file can be found through [IGV](https://github.com/igvteam/igv/blob/master/genomes/sizes/hg38.chrom.sizes).
 * IGVtools: Details on [igvtools toTDF](https://github.com/philres/IGV/blob/master/docs/igvtools_readme.txt).
 * read correction count (rcc): readcountcorrectBG.py program available on [mapandvischainonfiji github](https://github.com/maallen3/mapandvischainonfiji). Use rcc to reduce sequencing bias based on depth for visualization in IGV.
-* bamCoverage: Part of deepTools suite. Used for generating coverage tracks (bedGraph or bigWig). Details on [bamCoverage](https://deeptools.readthedocs.io/en/develop/content/tools/bamCoverage.html) found on deepTools site.
+* bamCoverage: Part of [deepTools suite](https://github.com/deeptools/deepTools). Used for generating coverage tracks (bedGraph or bigWig). Details on [bamCoverage](https://deeptools.readthedocs.io/en/develop/content/tools/bamCoverage.html) found on deepTools site.
