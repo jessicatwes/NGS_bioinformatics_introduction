@@ -13,8 +13,8 @@ her omnics data such as transcriptomics, epigenomics, or proteomics for a more c
 omplete understanding.
  
 ## Getting started
-1. Obtain Variant Calls: Variant calls are captured in sequencing data and gener
-ated through whole-genome sequencing or whole-exome sequencing
+1. Obtain Variant Calls: Variant calls are captured in sequencing data and generated through whole-genome sequencing or whole-exome sequencing
+Use wget_vcf.sh to download vcf files from The 1000 Genomes Project.
 2. Quality control: Evaluate the quality of variant calls to ensure accurate and
  reliable variant identification. You can filter out low quality variants to exclude false positives or variants with insuffient evidence.
 3. Visualization: Genome browsers can be used to visualize variant data to further explore the genomic regions and annotated variants 
@@ -22,4 +22,9 @@ ated through whole-genome sequencing or whole-exome sequencing
 ant of interest has clinical applications, know pathogenicity, or is a rare or n
 ovel variant
 
-
+## Resources
+Public archive that contains genomic data associated with variant calls
+* [The 1000 Genomes Project](https://www.internationalgenome.org/)
+* NIH [dbSNP](https://www.ncbi.nlm.nih.gov/snp/)
+* Genome Aggregation Database [(gnomAD)](https://gnomad.broadinstitute.org/)
+Grch38: [GATK resources](https://gatk.broadinstitute.org/hc/en-us/articles/360035890811-Resource-bundle) for files needed for variant discovery.
