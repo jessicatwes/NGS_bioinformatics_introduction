@@ -8,5 +8,5 @@ Using MEME (Multiple EM for Motif Elicitation) and TOMTOM, we can discover motif
 
 ## Resources
 [MEME](https://meme-suite.org/meme/): Suite of tools for motif-based sequence analysis
-<hr>[TOMTOM](https://meme-suite.org/meme/tools/tomtom): A motif comparison tool; part of the MEME suite
+<br>[TOMTOM](https://meme-suite.org/meme/tools/tomtom): A motif comparison tool; part of the MEME suite
 <br>[HOMER](http://homer.ucsd.edu/homer/motif/): Alternative to motif discovery for DNA sequences
