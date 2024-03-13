@@ -1,5 +1,7 @@
-# Bioinformatic introduction
-The field of bioinformatic involves a combination of biological knowledge in addition to computational skills. This repository will cover some of the basic tools and package to convert your raw data into a format that can be used to explore and gain data insight. My primary work was in Next-Generation Sequencing (NGS), hence this repository will be primary using NGS datasets.
+# NGS and Bioinformatic Introduction
+The field of bioinformatic involves a combination of biological knowledge in addition to computational to gain practical insights about biology. It includes collection of data, storage and retrieval, quality control, transformation or  manipulation, as well as modelling of data for analysis, visualization or prediction through the use of software and algorithms.
+
+This repository will cover some of the basic tools and package to convert your raw DNA sequencing data into a format that can be used to explore and gain data insight anout human health. My primary work is in Next-Generation Sequencing (NGS), hence this repository will be primary using NGS datasets.
 
 ![Next-generation sequencing illustration](NGS.png)
 
