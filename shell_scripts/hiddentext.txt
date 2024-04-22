@@ -1,3 +1,0 @@
-Base this directory off of https://www.sjsu.edu/cs/docs/fall_2022_syllabi/CS131_Syllabus_ProcBigData_Fall_2022.pdf
-
-https://github.com/Hninyeeko/cs131/
